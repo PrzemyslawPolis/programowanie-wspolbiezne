@@ -1,4 +1,5 @@
 ﻿
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
@@ -9,6 +10,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using PresentationViewModel;
 
 namespace PresentationView
 {
@@ -20,6 +22,8 @@ namespace PresentationView
         public MainWindow()
         {
             InitializeComponent();
-        }
+            ViewModel viewModel = new ViewModel();
+            NewText.Text = viewModel.GetString();
+        }       
     }
 }
