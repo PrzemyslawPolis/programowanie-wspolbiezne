@@ -1,4 +1,4 @@
-﻿namespace TP.ConcurrentProgramming.Data
+﻿namespace Data
 {
     internal record Vector : IVector
     {
