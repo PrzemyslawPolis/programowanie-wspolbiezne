@@ -5,16 +5,16 @@ namespace Data
 {
     internal class DataImplementation : DataAbstractAPI
     {
-        #region ctor
+        //private bool disposedValue;
+        private bool Disposed = false;
 
+        private readonly Timer MoveTimer;
+        private List<Ball> BallsList = [];
         public DataImplementation()
         {
-            MoveTimer = new Timer(Move, null, TimeSpan.Zero, TimeSpan.FromMilliseconds(100));
+            MoveTimer = new Timer(Move, null, TimeSpan.Zero, TimeSpan.FromMilliseconds(50)); //20 FPS
         }
 
-        #endregion ctor
-
-        #region DataAbstractAPI
 
         public override void Start(int numberOfBalls, Action<IVector, IBall> upperLayerHandler)
         {
@@ -25,16 +25,14 @@ namespace Data
             Random random = new Random();
             for (int i = 0; i < numberOfBalls; i++)
             {
-                Vector startingPosition = new(random.Next(100, 400 - 100), random.Next(100, 400 - 100));
-                Ball newBall = new(startingPosition, startingPosition);
+                Vector startingPosition = new(random.Next(100, 500), random.Next(100, 500));
+                Vector initialVelocity = new(random.Next(-10, 10), random.Next(-10, 10));
+                Ball newBall = new(startingPosition, initialVelocity);
                 upperLayerHandler(startingPosition, newBall);
                 BallsList.Add(newBall);
             }
         }
 
-        #endregion DataAbstractAPI
-
-        #region IDisposable
 
         protected virtual void Dispose(bool disposing)
         {
@@ -58,26 +56,14 @@ namespace Data
             GC.SuppressFinalize(this);
         }
 
-        #endregion IDisposable
-
-        #region private
-
-        //private bool disposedValue;
-        private bool Disposed = false;
-
-        private readonly Timer MoveTimer;
-        private Random RandomGenerator = new();
-        private List<Ball> BallsList = [];
 
         private void Move(object? x)
         {
             foreach (Ball item in BallsList)
-                item.Move(new Vector((RandomGenerator.NextDouble() - 0.5) * 10, (RandomGenerator.NextDouble() - 0.5) * 10));
+                item.Move(new Vector(item.Velocity.x, item.Velocity.y), false);
         }
 
-        #endregion private
-
-        #region TestingInfrastructure
+        
 
         [Conditional("DEBUG")]
         internal void CheckBallsList(Action<IEnumerable<IBall>> returnBallsList)
@@ -97,6 +83,5 @@ namespace Data
             returnInstanceDisposed(Disposed);
         }
 
-        #endregion TestingInfrastructure
     }
 }

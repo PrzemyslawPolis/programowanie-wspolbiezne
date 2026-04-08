@@ -8,7 +8,7 @@ namespace PresentationModel
 
         public string GetString()
         {
-            Program program = new Program();
+            BorderDetection program = new BorderDetection();
             return program.GetString();
         }
     }

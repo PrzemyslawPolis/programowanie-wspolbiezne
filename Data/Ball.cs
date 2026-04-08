@@ -3,39 +3,42 @@ namespace Data
 {
     internal class Ball : IBall
     {
-        #region ctor
-
+        
         internal Ball(Vector initialPosition, Vector initialVelocity)
         {
             Position = initialPosition;
             Velocity = initialVelocity;
         }
 
-        #endregion ctor
 
-        #region IBall
 
         public event EventHandler<IVector>? NewPositionNotification;
 
         public IVector Velocity { get; set; }
 
-        #endregion IBall
-
-        #region private
 
         private Vector Position;
+
+        public void SetPosition(double newX, double newY)
+        {
+            Position = new Vector(newX, newY);
+        }
+
+        public void SetVelocity(double newX, double newY)
+        {
+            Velocity = new Vector(newX, newY);
+        }
 
         private void RaiseNewPositionChangeNotification()
         {
             NewPositionNotification?.Invoke(this, Position);
         }
 
-        internal void Move(Vector delta)
+        internal void Move(Vector delta, bool silent)
         {
             Position = new Vector(Position.x + delta.x, Position.y + delta.y);
-            RaiseNewPositionChangeNotification();
+            if (!silent) RaiseNewPositionChangeNotification();
         }
 
-        #endregion private
     }
 }
