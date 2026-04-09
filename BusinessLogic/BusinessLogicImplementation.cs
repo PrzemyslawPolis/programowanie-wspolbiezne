@@ -1,30 +1,29 @@
-﻿using System.Diagnostics;
+﻿using Data;
+using System.Diagnostics;
 
 namespace BusinessLogic
 {
     internal class BusinessLogicImplementation : BusinessLogicAbstractAPI
     {
-        #region ctor
-
+       
         public BusinessLogicImplementation() : this(null)
         { }
 
-        internal BusinessLogicImplementation(UnderneathLayerAPI? underneathLayer)
+        internal BusinessLogicImplementation(Data.DataAbstractAPI? underneathLayer)
         {
-            layerBellow = underneathLayer == null ? UnderneathLayerAPI.GetDataLayer() : underneathLayer;
+            layerBelow = underneathLayer == null ? Data.DataAbstractAPI.GetDataLayer() : underneathLayer;
         }
 
-        #endregion ctor
-
-        #region BusinessLogicAbstractAPI
 
         public override void Dispose()
         {
             if (Disposed)
                 throw new ObjectDisposedException(nameof(BusinessLogicImplementation));
-            layerBellow.Dispose();
+            layerBelow.Dispose();
             Disposed = true;
         }
+
+        private Dictionary<Data.IBall, Ball> BallDict = new();
 
         public override void Start(int numberOfBalls, Action<IPosition, IBall> upperLayerHandler)
         {
@@ -32,20 +31,70 @@ namespace BusinessLogic
                 throw new ObjectDisposedException(nameof(BusinessLogicImplementation));
             if (upperLayerHandler == null)
                 throw new ArgumentNullException(nameof(upperLayerHandler));
-            layerBellow.Start(numberOfBalls, (startingPosition, databall) => upperLayerHandler(new Position(startingPosition.x, startingPosition.x), new Ball(databall)));
+            layerBelow.Start(numberOfBalls, (startingPosition, dataBall) =>
+            {
+                Ball logicBall = new Ball();
+
+                BallDict.Add(dataBall, logicBall);
+
+                dataBall.NewPositionNotification += OnBallPositionNotification;
+                
+                upperLayerHandler(new Position(startingPosition.x, startingPosition.y), logicBall);
+            });
         }
 
-        #endregion BusinessLogicAbstractAPI
+        private void OnBallPositionNotification(object? sender, IVector newPos)
+        {
+            if (sender != null)
+            {
+                Data.IBall ball = (Data.IBall)sender!;
 
-        #region private
+                double radius = BusinessLogicAbstractAPI.GetDimensions.BallDimension / 2;
+                double width = BusinessLogicAbstractAPI.GetDimensions.TableWidth;
+                double height = BusinessLogicAbstractAPI.GetDimensions.TableHeight;
+
+                double currX = newPos.x;
+                double currY = newPos.y;
+                
+                if (currX <= radius || currX >= width-radius)
+                {
+                    if (currX < radius)
+                    {
+                        currX = radius;
+                    }
+                    else if (currX > width - radius)
+                    {
+                        currX = width - radius;
+                    }
+                    ball.SetPosition(currX, currY);
+                    ball.SetVelocity(-ball.Velocity.x, ball.Velocity.y);
+                }
+                if (currY <= radius || currY >= height-radius)
+                {
+                    if (currY < radius)
+                    {
+                        currY = radius;
+                    }
+                    else if (currY > height - radius)
+                    {
+                        currY = height - radius;
+                    }
+                    ball.SetPosition(currX, currY);
+                    ball.SetVelocity(ball.Velocity.x, -ball.Velocity.y);
+                }
+
+                if (BallDict.TryGetValue(ball, out var logicBall))
+                {             
+                    logicBall.UpdatePosition(currX, currY);
+                }
+            }
+        }
 
         private bool Disposed = false;
 
-        private readonly UnderneathLayerAPI layerBellow;
+        private readonly Data.DataAbstractAPI layerBelow;
 
-        #endregion private
 
-        #region TestingInfrastructure
 
         [Conditional("DEBUG")]
         internal void CheckObjectDisposed(Action<bool> returnInstanceDisposed)
@@ -53,6 +102,5 @@ namespace BusinessLogic
             returnInstanceDisposed(Disposed);
         }
 
-        #endregion TestingInfrastructure
     }
 }

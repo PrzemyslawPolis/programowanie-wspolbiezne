@@ -2,24 +2,16 @@
 {
     internal class Ball : IBall
     {
-        public Ball(Data.IBall ball)
-        {
-            ball.NewPositionNotification += RaisePositionChangeEvent;
-        }
-
-        #region IBall
+             
 
         public event EventHandler<IPosition>? NewPositionNotification;
 
-        #endregion IBall
 
-        #region private
 
-        private void RaisePositionChangeEvent(object? sender, Data.IVector e)
+        internal void UpdatePosition(double x, double y)
         {
-            NewPositionNotification?.Invoke(this, new Position(e.x, e.y));
+            NewPositionNotification?.Invoke(this, new Position(x, y));
         }
 
-        #endregion private
     }
 }
