@@ -6,7 +6,7 @@
 
         public string GetString()
         {
-            PresentationModel.Model model = new PresentationModel.Model();
+            PresentationModel.BallModel model = new PresentationModel.BallModel();
             return model.GetString();
         }
     }
