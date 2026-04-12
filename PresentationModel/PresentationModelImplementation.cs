@@ -48,7 +48,8 @@ namespace PresentationModel
 
         private void StartHandler(BusinessLogic.IPosition position, BusinessLogic.IBall ball)
         {
-            BallModel newBall = new BallModel(position.x, position.y, ball) { Diameter = 40.0 };
+            double diameter = BusinessLogic.BusinessLogicAbstractAPI.GetDimensions.BallDimension;
+            BallModel newBall = new BallModel(position.x, position.y, ball) { Diameter = diameter };
             BallChanged.Invoke(this, new BallChangeEventArgs() { Ball = newBall });
         }
 

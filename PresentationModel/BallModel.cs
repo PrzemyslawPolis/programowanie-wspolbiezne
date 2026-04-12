@@ -48,7 +48,9 @@ namespace PresentationModel
 
         private void OnNewPosition(object sender, IPosition pos)
         {
-            Top = pos.y; Left = pos.x;
+            double offset = Diameter / 2;
+            Top = pos.y - offset;
+            Left = pos.x - offset;
         }
 
         private void RaisePropertyChanged([CallerMemberName] string propertyName = "")

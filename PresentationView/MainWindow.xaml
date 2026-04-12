@@ -1,16 +1,33 @@
 ﻿<Window x:Class="PresentationView.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:PresentationView"
+        xmlns:vm="clr-namespace:PresentationViewModel;assembly=PresentationViewModel"
         mc:Ignorable="d"
-        Title="MainWindow" Height="600" Width="600">
-    <Grid>
-        <TextBlock x:Name="NewText"
-                   Text="Hello World!"
-                   HorizontalAlignment="Center"
-                   VerticalAlignment="Center"
-                   FontSize="40"/>
-    </Grid>
+        Title="Kulki" Height="auto" Width="auto">
+    <Window.DataContext>
+        <vm:MainWindowViewModel />
+    </Window.DataContext>
+    <!-- Border includes its thickness in Width/Height, so increase to keep inner canvas 600x600 -->
+    <Border BorderThickness="4" BorderBrush="Green" Height="608" Width="608">
+        <ItemsControl ItemsSource="{Binding Balls}">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <Canvas/>
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <Ellipse Width= "{Binding Diameter}" Height="{Binding Diameter}" Fill="Blue" />
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+            <ItemsControl.ItemContainerStyle>
+                <Style TargetType="ContentPresenter">
+                    <Setter Property="Canvas.Top" Value="{Binding Top}" />
+                    <Setter Property="Canvas.Left" Value="{Binding Left}" />
+                </Style>
+            </ItemsControl.ItemContainerStyle>
+        </ItemsControl>
+    </Border>
 </Window>

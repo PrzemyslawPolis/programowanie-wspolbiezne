@@ -1,29 +1,26 @@
-﻿
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
+﻿using PresentationViewModel;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using PresentationViewModel;
 
 namespace PresentationView
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
+
     public partial class MainWindow : Window
     {
         public MainWindow()
         {
+            Random random = new Random();
             InitializeComponent();
-            ViewModel viewModel = new ViewModel();
-            NewText.Text = viewModel.GetString();
-        }       
+            MainWindowViewModel viewModel = (MainWindowViewModel)DataContext;
+            double screenWidth = SystemParameters.PrimaryScreenWidth;
+            double screenHeight = SystemParameters.PrimaryScreenHeight;
+            viewModel.Start(random.Next(5, 10));
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            if (DataContext is MainWindowViewModel viewModel)
+                viewModel.Dispose();
+            base.OnClosed(e);
+        }
     }
 }
