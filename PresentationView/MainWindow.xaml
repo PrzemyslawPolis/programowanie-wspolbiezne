@@ -9,7 +9,6 @@
     <Window.DataContext>
         <vm:MainWindowViewModel />
     </Window.DataContext>
-    <!-- Border includes its thickness in Width/Height, so increase to keep inner canvas 600x600 -->
     <Border BorderThickness="4" BorderBrush="Green" Height="608" Width="608">
         <ItemsControl ItemsSource="{Binding Balls}">
             <ItemsControl.ItemsPanel>
