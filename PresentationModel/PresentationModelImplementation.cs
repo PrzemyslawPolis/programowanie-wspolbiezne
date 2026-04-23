@@ -53,7 +53,7 @@ namespace PresentationModel
             BallChanged.Invoke(this, new BallChangeEventArgs() { Ball = newBall });
         }
 
-        
+
         [Conditional("DEBUG")]
         internal void CheckObjectDisposed(Action<bool> returnInstanceDisposed)
         {
@@ -71,7 +71,6 @@ namespace PresentationModel
         {
             returnBallChangedIsNull(BallChanged == null);
         }
-
     }
 
     public class BallChangeEventArgs : EventArgs

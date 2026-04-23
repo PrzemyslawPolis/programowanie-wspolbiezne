@@ -6,8 +6,6 @@ namespace PresentationViewModel
 {
     public class MainWindowViewModel : ViewModelBase, IDisposable
     {
-        #region ctor
-
         public MainWindowViewModel() : this(null)
         { }
 
@@ -17,9 +15,6 @@ namespace PresentationViewModel
             Observer = ModelLayer.Subscribe<PresentationModel.IBall>(x => Balls.Add(x));
         }
 
-        #endregion ctor
-
-        #region public API
 
         public void Start(int numberOfBalls)
         {
@@ -31,9 +26,6 @@ namespace PresentationViewModel
 
         public ObservableCollection<PresentationModel.IBall> Balls { get; } = new ObservableCollection<PresentationModel.IBall>();
 
-        #endregion public API
-
-        #region IDisposable
 
         protected virtual void Dispose(bool disposing)
         {
@@ -58,14 +50,9 @@ namespace PresentationViewModel
             GC.SuppressFinalize(this);
         }
 
-        #endregion IDisposable
-
-        #region private
-
         private IDisposable Observer = null;
         private PresentationModelAbstractAPI ModelLayer;
         private bool Disposed = false;
 
-        #endregion private
     }
 }

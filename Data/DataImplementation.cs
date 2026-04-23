@@ -5,14 +5,13 @@ namespace Data
 {
     internal class DataImplementation : DataAbstractAPI
     {
-        //private bool disposedValue;
         private bool Disposed = false;
 
         private readonly Timer MoveTimer;
         private List<Ball> BallsList = [];
         public DataImplementation()
         {
-            MoveTimer = new Timer(Move, null, TimeSpan.Zero, TimeSpan.FromMilliseconds(50)); //20 FPS
+            MoveTimer = new Timer(Move, null, TimeSpan.Zero, TimeSpan.FromMilliseconds(15)); //75 FPS
         }
 
 
@@ -26,7 +25,9 @@ namespace Data
             for (int i = 0; i < numberOfBalls; i++)
             {
                 Vector startingPosition = new(random.Next(100, 500), random.Next(100, 500));
-                Vector initialVelocity = new(random.Next(-10, 10), random.Next(-10, 10));
+                double initVx = (double)random.Next(-100, 100) / 10.0;
+                double initVy = (double)random.Next(-100, 100) / 10.0;
+                Vector initialVelocity = new(initVx, initVy);
                 Ball newBall = new(startingPosition, initialVelocity);
                 upperLayerHandler(startingPosition, newBall);
                 BallsList.Add(newBall);
@@ -64,7 +65,7 @@ namespace Data
         }
 
         
-
+        //metody do testów
         [Conditional("DEBUG")]
         internal void CheckBallsList(Action<IEnumerable<IBall>> returnBallsList)
         {

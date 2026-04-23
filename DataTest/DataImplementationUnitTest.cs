@@ -41,17 +41,15 @@
       using (DataImplementation newInstance = new DataImplementation())
       {
         int numberOfCallbackInvoked = 0;
-        int numberOfBalls2Create = 10;
-        newInstance.Start(
-          numberOfBalls2Create,
-          (startingPosition, ball) =>
+        int numberOfBallsToCreate = 10;
+        newInstance.Start(numberOfBallsToCreate, (startingPosition, ball) =>
           {
             numberOfCallbackInvoked++;
             Assert.IsTrue(startingPosition.x >= 0);
             Assert.IsTrue(startingPosition.y >= 0);
             Assert.IsNotNull(ball);
           });
-        Assert.AreEqual<int>(numberOfBalls2Create, numberOfCallbackInvoked);
+        Assert.AreEqual<int>(numberOfBallsToCreate, numberOfCallbackInvoked);
         newInstance.CheckNumberOfBalls(x => Assert.AreEqual<int>(10, x));
       }
     }

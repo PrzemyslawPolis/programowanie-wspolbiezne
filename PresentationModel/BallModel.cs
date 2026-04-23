@@ -20,8 +20,7 @@ namespace PresentationModel
             get { return TopBackingField; }
             private set
             {
-                if (TopBackingField == value)
-                    return;
+                if (TopBackingField == value) return;
                 TopBackingField = value;
                 RaisePropertyChanged();
             }
@@ -32,8 +31,7 @@ namespace PresentationModel
             get { return LeftBackingField; }
             private set
             {
-                if (LeftBackingField == value)
-                    return;
+                if (LeftBackingField == value) return;
                 LeftBackingField = value;
                 RaisePropertyChanged();
             }
@@ -48,9 +46,9 @@ namespace PresentationModel
 
         private void OnNewPosition(object sender, IPosition pos)
         {
-            double offset = Diameter / 2;
-            Top = pos.y - offset;
-            Left = pos.x - offset;
+            double radius = Diameter / 2;
+            Top = pos.y - radius;
+            Left = pos.x - radius;
         }
 
         private void RaisePropertyChanged([CallerMemberName] string propertyName = "")
@@ -64,10 +62,7 @@ namespace PresentationModel
         { Left = x; }
 
         [Conditional("DEBUG")]
-        internal void SettTop(double x)
+        internal void SetTop(double x)
         { Top = x; }
-
-
-
     }
 }

@@ -55,6 +55,7 @@ namespace BusinessLogic
 
                 double currX = newPos.x;
                 double currY = newPos.y;
+
                 
                 if (currX <= radius || currX >= width-radius)
                 {
@@ -93,14 +94,5 @@ namespace BusinessLogic
         private bool Disposed = false;
 
         private readonly Data.DataAbstractAPI layerBelow;
-
-
-
-        [Conditional("DEBUG")]
-        internal void CheckObjectDisposed(Action<bool> returnInstanceDisposed)
-        {
-            returnInstanceDisposed(Disposed);
-        }
-
     }
 }
