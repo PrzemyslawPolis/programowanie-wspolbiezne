@@ -1,10 +1,7 @@
-﻿using PresentationModel;
-using PresentationViewModel;
-
-namespace PresentationViewModelTest
+﻿namespace PresentationViewModelTest
 {
     [TestClass]
-    public sealed class Test1
+    public sealed class MainWindowViewModelUnitTest
     {
         [TestMethod]
         public void TestMethod1()

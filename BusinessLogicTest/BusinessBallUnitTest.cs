@@ -1,7 +1,7 @@
 ﻿namespace BusinessLogic.Test
 {
     [TestClass]
-    public sealed class BusinessBallTest
+    public sealed class BusinessBallUnitTest
     {
         [TestMethod]
         public void CallbackTestMethod()

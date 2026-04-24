@@ -94,5 +94,11 @@ namespace BusinessLogic
         private bool Disposed = false;
 
         private readonly Data.DataAbstractAPI layerBelow;
+
+        [Conditional("DEBUG")]
+        internal void CheckObjectDisposed(Action<bool> returnInstanceDisposed)
+        {
+            returnInstanceDisposed(Disposed);
+        }
     }
 }

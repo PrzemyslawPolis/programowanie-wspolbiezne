@@ -4,7 +4,7 @@ using System.Numerics;
 namespace BusinessLogic.Test
 {
     [TestClass]
-    public class BusinessLogicImplementationTest
+    public class BusinessLogicImplementationUnitTest
     {
         internal class FakeBall : Data.IBall
         {
@@ -40,15 +40,20 @@ namespace BusinessLogic.Test
             {
                 for (int i = 0; i < numberOfBalls; i++)
                 {
-                    var fakeBall = new FakeBall();
+                    FakeBall fakeBall = new();
                     CreatedBalls.Add(fakeBall);
 
 
                     handler(new FakeVector(100, 100), fakeBall);
                 }
             }
+            
+            public bool DisposeCalled { get; private set; } = false;
 
-            public override void Dispose() { }
+            public override void Dispose() 
+            { 
+                DisposeCalled = true;
+            }
         }
 
         internal class FakeVector : Data.IVector {
@@ -66,12 +71,12 @@ namespace BusinessLogic.Test
         [TestMethod]
         public void WallBounceTestMethod()
         {
-            var fakeData = new FakeDataAPI();
+            FakeDataAPI fakeData = new();
 
             double radius = BusinessLogicAbstractAPI.GetDimensions.BallDimension / 2;
             double height = BusinessLogicAbstractAPI.GetDimensions.TableHeight;
 
-            var logic = new BusinessLogicImplementation(fakeData);
+            BusinessLogicImplementation logic = new(fakeData);
 
             logic.Start(1, (pos, logicBall) => { });
 
@@ -91,6 +96,27 @@ namespace BusinessLogic.Test
             Assert.AreEqual(-10, fakeData.CreatedBalls[0].Velocity.y);
             Assert.AreEqual(0 + radius, fakeData.CreatedBalls[0].X);
             Assert.AreEqual(height-radius, fakeData.CreatedBalls[0].Y);
+        }
+
+        [TestMethod]
+        public void DisposeTestMethod()
+        {
+            FakeDataAPI fakeDataLayer = new();
+            BusinessLogicImplementation newInstance = new(fakeDataLayer);
+
+            bool newInstanceDisposed = false;
+            newInstance.CheckObjectDisposed(x => newInstanceDisposed = x);
+
+            Assert.IsFalse(newInstanceDisposed);
+            Assert.IsFalse(fakeDataLayer.DisposeCalled);
+
+            newInstance.Dispose();
+            newInstance.CheckObjectDisposed(x => newInstanceDisposed = x);
+            Assert.IsTrue(newInstanceDisposed);
+            Assert.IsTrue(fakeDataLayer.DisposeCalled);
+
+            Assert.ThrowsException<ObjectDisposedException>(() => newInstance.Dispose());
+            Assert.ThrowsException<ObjectDisposedException>(() => newInstance.Start(0, (position, ball) => { }));
         }
     }
 }

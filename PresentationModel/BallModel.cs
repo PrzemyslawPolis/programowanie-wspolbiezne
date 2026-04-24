@@ -7,10 +7,12 @@ namespace PresentationModel
 {
     public class BallModel : IBall
     {
-        public BallModel(double top, double left, BusinessLogic.IBall underneathBall)
+        public BallModel(double left, double top, double diameter, BusinessLogic.IBall underneathBall)
         {
-            TopBackingField = top;
-            LeftBackingField = left;
+            this.Diameter = diameter;
+            double radius = Diameter / 2;
+            TopBackingField = top - radius;
+            LeftBackingField = left - radius;
             underneathBall.NewPositionNotification += OnNewPosition;
         }
 
@@ -46,6 +48,7 @@ namespace PresentationModel
 
         private void OnNewPosition(object sender, IPosition pos)
         {
+            //Koordynaty w oknie to Top/Left (odległość od krawędzi ekranu), i liczą się względem lewego górnego rogu, a nie środka
             double radius = Diameter / 2;
             Top = pos.y - radius;
             Left = pos.x - radius;
@@ -55,14 +58,5 @@ namespace PresentationModel
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
-
-
-        [Conditional("DEBUG")]
-        internal void SetLeft(double x)
-        { Left = x; }
-
-        [Conditional("DEBUG")]
-        internal void SetTop(double x)
-        { Top = x; }
     }
 }
