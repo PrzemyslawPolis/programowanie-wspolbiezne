@@ -1,58 +1,68 @@
-﻿using System.Collections.ObjectModel;
-using PresentationModel;
+﻿using PresentationModel;
 using PresentationViewModel.MVVMLight;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.Windows.Input;
 
 namespace PresentationViewModel
 {
     public class MainWindowViewModel : ViewModelBase, IDisposable
     {
-        public MainWindowViewModel() : this(null)
-        { }
+        private readonly PresentationModelAbstractAPI layerBelow;
+        private IDisposable? Observer;
+        private int ballsCount = 5;
+        private bool Disposed = false;
 
-        internal MainWindowViewModel(PresentationModelAbstractAPI modelLayerAPI)
+        public int BallsCount
         {
-            ModelLayer = modelLayerAPI == null ? PresentationModelAbstractAPI.CreateModel() : modelLayerAPI;
-            Observer = ModelLayer.Subscribe<PresentationModel.IBall>(x => Balls.Add(x));
+            get => ballsCount;
+            set { ballsCount = value; RaisePropertyChanged(); }
         }
 
+        public ObservableCollection<IBall> Balls { get; } = new ObservableCollection<IBall>();
 
-        public void Start(int numberOfBalls)
+        public ICommand StartCommand { get; }
+
+        public MainWindowViewModel() : this(null) { }
+
+        internal MainWindowViewModel(PresentationModelAbstractAPI? underneathLayer)
         {
-            if (Disposed)
-                throw new ObjectDisposedException(nameof(MainWindowViewModel));
-            ModelLayer.Start(numberOfBalls);
-            Observer.Dispose();
-        }
+            layerBelow = underneathLayer == null ? PresentationModel.PresentationModelAbstractAPI.CreateModel() : underneathLayer;
 
-        public ObservableCollection<PresentationModel.IBall> Balls { get; } = new ObservableCollection<PresentationModel.IBall>();
-
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!Disposed)
+            Observer = layerBelow.Subscribe(ball =>
             {
-                if (disposing)
+                if (System.Windows.Application.Current?.Dispatcher != null)
                 {
-                    Balls.Clear();
-                    Observer.Dispose();
-                    ModelLayer.Dispose();
+                    System.Windows.Application.Current.Dispatcher.Invoke(() => Balls.Add(ball));
                 }
+                else
+                {
+                    Balls.Add(ball);
+                }
+            });
 
-                Disposed = true;
-            }
+            StartCommand = new RelayCommand(ExecuteStart);
+        }
+
+        private void ExecuteStart()
+        {
+            Balls.Clear();
+            layerBelow.Start(BallsCount);
         }
 
         public void Dispose()
         {
             if (Disposed)
-                throw new ObjectDisposedException(nameof(MainWindowViewModel));
-            Dispose(disposing: true);
-            GC.SuppressFinalize(this);
+                throw new ObjectDisposedException(nameof(PresentationModel));
+            Observer?.Dispose();
+            layerBelow.Dispose();
+            Disposed = true;
         }
 
-        private IDisposable Observer = null;
-        private PresentationModelAbstractAPI ModelLayer;
-        private bool Disposed = false;
-
+        [Conditional("DEBUG")]
+        internal void CheckObjectDisposed(Action<bool> returnInstanceDisposed)
+        {
+            returnInstanceDisposed(Disposed);
+        }
     }
 }

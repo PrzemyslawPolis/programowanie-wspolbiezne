@@ -15,7 +15,7 @@ namespace PresentationModel
 
         internal PresentationModelImplementation(BusinessLogic.BusinessLogicAbstractAPI underneathLayer)
         {
-            layerBellow = underneathLayer == null ? BusinessLogic.BusinessLogicAbstractAPI.GetBusinessLogicLayer() : underneathLayer;
+            layerBelow = underneathLayer == null ? BusinessLogic.BusinessLogicAbstractAPI.GetBusinessLogicLayer() : underneathLayer;
             eventObservable = Observable.FromEventPattern<BallChangeEventArgs>(this, "BallChanged");
         }
 
@@ -24,7 +24,7 @@ namespace PresentationModel
         {
             if (Disposed)
                 throw new ObjectDisposedException(nameof(PresentationModel));
-            layerBellow.Dispose();
+            layerBelow.Dispose();
             Disposed = true;
         }
 
@@ -35,7 +35,7 @@ namespace PresentationModel
 
         public override void Start(int numberOfBalls)
         {
-            layerBellow.Start(numberOfBalls, StartHandler);
+            layerBelow.Start(numberOfBalls, StartHandler);
         }
 
 
@@ -44,7 +44,7 @@ namespace PresentationModel
 
         private bool Disposed = false;
         private readonly IObservable<EventPattern<BallChangeEventArgs>> eventObservable = null;
-        private readonly BusinessLogic.BusinessLogicAbstractAPI layerBellow = null;
+        private readonly BusinessLogic.BusinessLogicAbstractAPI layerBelow = null;
 
         private void StartHandler(BusinessLogic.IPosition position, BusinessLogic.IBall ball)
         {

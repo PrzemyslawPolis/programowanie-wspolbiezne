@@ -8,12 +8,7 @@ namespace PresentationView
     {
         public MainWindow()
         {
-            Random random = new Random();
             InitializeComponent();
-            MainWindowViewModel viewModel = (MainWindowViewModel)DataContext;
-            double screenWidth = SystemParameters.PrimaryScreenWidth;
-            double screenHeight = SystemParameters.PrimaryScreenHeight;
-            viewModel.Start(random.Next(5, 10));
         }
 
         protected override void OnClosed(EventArgs e)
