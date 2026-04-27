@@ -11,7 +11,7 @@ namespace Data
         private List<Ball> BallsList = [];
         public DataImplementation()
         {
-            MoveTimer = new Timer(Move, null, TimeSpan.Zero, TimeSpan.FromMilliseconds(15)); //75 FPS
+            MoveTimer = new Timer(Move, null, Timeout.InfiniteTimeSpan, TimeSpan.FromMilliseconds(15)); //75 FPS
         }
 
 
@@ -21,6 +21,7 @@ namespace Data
                 throw new ObjectDisposedException(nameof(DataImplementation));
             if (upperLayerHandler == null)
                 throw new ArgumentNullException(nameof(upperLayerHandler));
+            MoveTimer.Change(Timeout.InfiniteTimeSpan, TimeSpan.FromMilliseconds(15));
             Random random = new Random();
             for (int i = 0; i < numberOfBalls; i++)
             {
@@ -32,6 +33,7 @@ namespace Data
                 upperLayerHandler(startingPosition, newBall);
                 BallsList.Add(newBall);
             }
+            MoveTimer.Change(TimeSpan.Zero, TimeSpan.FromMilliseconds(15));
         }
 
 
