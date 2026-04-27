@@ -1,4 +1,5 @@
-﻿using System;
+﻿using BusinessLogic;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Text;
@@ -19,6 +20,8 @@ namespace PresentationModel
             return modelInstance.Value;
         }
 
+        public static readonly Dimensions GetDimensions = new(BusinessLogic.BusinessLogicAbstractAPI.GetDimensions.TableHeight, BusinessLogic.BusinessLogicAbstractAPI.GetDimensions.TableWidth);
+
         public abstract void Start(int numberOfBalls);
 
         public abstract IDisposable Subscribe(IObserver<IBall> observer);
@@ -27,4 +30,6 @@ namespace PresentationModel
 
         private static Lazy<PresentationModelAbstractAPI> modelInstance = new Lazy<PresentationModelAbstractAPI>(() => new PresentationModelImplementation());
     }
+
+    public record Dimensions(double TableHeight, double TableWidth);
 }

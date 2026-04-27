@@ -19,7 +19,7 @@
         </StackPanel>
 
         <Viewbox Grid.Row="1" Stretch="Uniform" Margin="10">
-            <Border BorderThickness="2" BorderBrush="Green" Width="600" Height="600" VerticalAlignment="Top">
+            <Border BorderThickness="2" BorderBrush="Green" Width="{Binding TableWidth}" Height="{Binding TableHeight}" VerticalAlignment="Top">
                 <ItemsControl ItemsSource="{Binding Balls}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>

@@ -9,9 +9,23 @@ namespace PresentationViewModel
     public class MainWindowViewModel : ViewModelBase, IDisposable
     {
         private readonly PresentationModelAbstractAPI layerBelow;
-        private IDisposable? Observer;
-        private int ballsCount = 5;
-        private bool Disposed = false;
+            private IDisposable? Observer;
+            private int ballsCount = 5;
+            private bool Disposed = false;
+            private int tableHeight;
+            private int tableWidth;
+
+            public int TableHeight
+            {
+                get => tableHeight;
+                set { tableHeight = value; RaisePropertyChanged(); }
+            }
+
+            public int TableWidth
+            {
+                get => tableWidth;
+                set { tableWidth = value; RaisePropertyChanged(); }
+            }
 
         public int BallsCount
         {
@@ -28,6 +42,9 @@ namespace PresentationViewModel
         internal MainWindowViewModel(PresentationModelAbstractAPI? underneathLayer)
         {
             layerBelow = underneathLayer == null ? PresentationModel.PresentationModelAbstractAPI.CreateModel() : underneathLayer;
+
+            TableHeight = (int)PresentationModelAbstractAPI.GetDimensions.TableHeight + 4;
+            TableWidth = (int)PresentationModelAbstractAPI.GetDimensions.TableWidth + 4;
 
             Observer = layerBelow.Subscribe(ball =>
             {
