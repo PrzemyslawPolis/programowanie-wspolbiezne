@@ -9,6 +9,9 @@ namespace Data
 
         private readonly Timer MoveTimer;
         private List<Ball> BallsList = [];
+
+        private CancellationTokenSource CancellationTokenSource = new();
+
         public DataImplementation()
         {
             MoveTimer = new Timer(Move, null, Timeout.InfiniteTimeSpan, TimeSpan.FromMilliseconds(15)); //75 FPS
@@ -30,12 +33,25 @@ namespace Data
                 double initVy = (double)random.Next(-100, 100) / 10.0;
                 Vector initialVelocity = new(initVx, initVy);
                 Ball newBall = new(startingPosition, initialVelocity);
-                upperLayerHandler(startingPosition, newBall);
                 BallsList.Add(newBall);
+                upperLayerHandler(startingPosition, newBall);
+
+                StartBallMovement(newBall, CancellationTokenSource.Token);
             }
             MoveTimer.Change(TimeSpan.Zero, TimeSpan.FromMilliseconds(15));
         }
 
+        private void StartBallMovement(Ball ball, CancellationToken cancellationToken)
+        {
+            Task.Run(async () =>
+            {
+                while (!cancellationToken.IsCancellationRequested)
+                {
+                    ball.Move(new Vector(ball.Velocity.x, ball.Velocity.y), true);
+                    await Task.Delay(15, cancellationToken);
+                }
+            }, cancellationToken);
+        }
 
         protected virtual void Dispose(bool disposing)
         {
