@@ -47,46 +47,49 @@ namespace BusinessLogic
         {
             if (sender != null)
             {
-                Data.IBall ball = (Data.IBall)sender!;
-
-                double radius = BusinessLogicAbstractAPI.GetDimensions.BallDimension / 2;
-                double width = BusinessLogicAbstractAPI.GetDimensions.TableWidth;
-                double height = BusinessLogicAbstractAPI.GetDimensions.TableHeight;
-
-                double currX = newPos.x;
-                double currY = newPos.y;
-
-                
-                if (currX <= radius || currX >= width-radius)
+                lock (this) //sekcja krytyczna
                 {
-                    if (currX < radius)
-                    {
-                        currX = radius;
-                    }
-                    else if (currX > width - radius)
-                    {
-                        currX = width - radius;
-                    }
-                    ball.SetPosition(currX, currY);
-                    ball.SetVelocity(-ball.Velocity.x, ball.Velocity.y);
-                }
-                if (currY <= radius || currY >= height-radius)
-                {
-                    if (currY < radius)
-                    {
-                        currY = radius;
-                    }
-                    else if (currY > height - radius)
-                    {
-                        currY = height - radius;
-                    }
-                    ball.SetPosition(currX, currY);
-                    ball.SetVelocity(ball.Velocity.x, -ball.Velocity.y);
-                }
+                    Data.IBall ball = (Data.IBall)sender!;
 
-                if (BallDict.TryGetValue(ball, out var logicBall))
-                {             
-                    logicBall.UpdatePosition(currX, currY);
+                    double radius = BusinessLogicAbstractAPI.GetDimensions.BallDimension / 2;
+                    double width = BusinessLogicAbstractAPI.GetDimensions.TableWidth;
+                    double height = BusinessLogicAbstractAPI.GetDimensions.TableHeight;
+
+                    double currX = newPos.x;
+                    double currY = newPos.y;
+
+
+                    if (currX <= radius || currX >= width - radius)
+                    {
+                        if (currX < radius)
+                        {
+                            currX = radius;
+                        }
+                        else if (currX > width - radius)
+                        {
+                            currX = width - radius;
+                        }
+                        ball.SetPosition(currX, currY);
+                        ball.SetVelocity(-ball.Velocity.x, ball.Velocity.y);
+                    }
+                    if (currY <= radius || currY >= height - radius)
+                    {
+                        if (currY < radius)
+                        {
+                            currY = radius;
+                        }
+                        else if (currY > height - radius)
+                        {
+                            currY = height - radius;
+                        }
+                        ball.SetPosition(currX, currY);
+                        ball.SetVelocity(ball.Velocity.x, -ball.Velocity.y);
+                    }
+
+                    if (BallDict.TryGetValue(ball, out var logicBall))
+                    {
+                        logicBall.UpdatePosition(currX, currY);
+                    }
                 }
             }
         }

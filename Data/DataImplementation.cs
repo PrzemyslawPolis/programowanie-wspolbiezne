@@ -7,15 +7,11 @@ namespace Data
     {
         private bool Disposed = false;
 
-        private readonly Timer MoveTimer;
         private List<Ball> BallsList = [];
 
         private CancellationTokenSource CancellationTokenSource = new();
 
-        public DataImplementation()
-        {
-            MoveTimer = new Timer(Move, null, Timeout.InfiniteTimeSpan, TimeSpan.FromMilliseconds(15)); //75 FPS
-        }
+        public DataImplementation() {}
 
 
         public override void Start(int numberOfBalls, Action<IVector, IBall> upperLayerHandler)
@@ -24,7 +20,6 @@ namespace Data
                 throw new ObjectDisposedException(nameof(DataImplementation));
             if (upperLayerHandler == null)
                 throw new ArgumentNullException(nameof(upperLayerHandler));
-            MoveTimer.Change(Timeout.InfiniteTimeSpan, TimeSpan.FromMilliseconds(15));
             Random random = new Random();
             for (int i = 0; i < numberOfBalls; i++)
             {
@@ -38,7 +33,6 @@ namespace Data
 
                 StartBallMovement(newBall, CancellationTokenSource.Token);
             }
-            MoveTimer.Change(TimeSpan.Zero, TimeSpan.FromMilliseconds(15));
         }
 
         private void StartBallMovement(Ball ball, CancellationToken cancellationToken)
@@ -47,7 +41,7 @@ namespace Data
             {
                 while (!cancellationToken.IsCancellationRequested)
                 {
-                    ball.Move(new Vector(ball.Velocity.x, ball.Velocity.y), true);
+                    ball.Move(new Vector(ball.Velocity.x, ball.Velocity.y), false);
                     await Task.Delay(15, cancellationToken);
                 }
             }, cancellationToken);
@@ -59,7 +53,7 @@ namespace Data
             {
                 if (disposing)
                 {
-                    MoveTimer.Dispose();
+                    CancellationTokenSource.Cancel();
                     BallsList.Clear();
                 }
                 Disposed = true;
@@ -73,13 +67,6 @@ namespace Data
             // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
-        }
-
-
-        private void Move(object? x)
-        {
-            foreach (Ball item in BallsList)
-                item.Move(new Vector(item.Velocity.x, item.Velocity.y), false);
         }
 
         
