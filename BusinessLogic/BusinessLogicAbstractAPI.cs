@@ -20,7 +20,7 @@
 
     }
 
-    public record Dimensions(double BallDimension, double TableHeight, double TableWidth);
+    public record Dimensions(double BallDimension, double TableHeight, double TableWidth); //BallDimension = diameter
 
     public interface IPosition
     {
