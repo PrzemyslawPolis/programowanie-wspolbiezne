@@ -9,6 +9,8 @@ namespace BusinessLogic
         private readonly object _lock = new object();
 
         private QuadTree activeTree = new QuadTree(new Boundary(0, 0, GetDimensions.TableWidth, GetDimensions.TableHeight)); //początkowe puste drzewo, żeby przeszło przez inicjalizację
+        private bool isTaskRunning = false;
+
         public BusinessLogicImplementation() : this(null)
         { }
 
@@ -35,6 +37,12 @@ namespace BusinessLogic
             if (upperLayerHandler == null)
                 throw new ArgumentNullException(nameof(upperLayerHandler));
 
+            lock (_lock)
+            {
+                BallDict.Clear();
+                activeTree = new QuadTree(new Boundary(0, 0, GetDimensions.TableWidth, GetDimensions.TableHeight));
+            }
+
             layerBelow.Start(numberOfBalls, (startingPosition, dataBall) =>
             {
                 Position newPosition = new Position(startingPosition.x, startingPosition.y);
@@ -48,23 +56,25 @@ namespace BusinessLogic
                 upperLayerHandler(newPosition, logicBall);
             });
 
-            Task.Run(async () => {
-                while (!Disposed)
-                {
-                    QuadTree newTree = new QuadTree(new Boundary(0, 0, GetDimensions.TableWidth, GetDimensions.TableHeight));
-
-                    lock (_lock)
+            if (!isTaskRunning)
+            {
+                isTaskRunning = true;
+                Task.Run(async () => {
+                    while (!Disposed)
                     {
-                        foreach (Ball logicBall in BallDict.Values)
+                        QuadTree newTree = new QuadTree(new Boundary(0, 0, GetDimensions.TableWidth, GetDimensions.TableHeight));
+                        lock (_lock)
                         {
-                            newTree.Insert(logicBall);
+                            foreach (Ball logicBall in BallDict.Values)
+                            {
+                                newTree.Insert(logicBall);
+                            }
                         }
+                        activeTree = newTree;
+                        await Task.Delay(15);
                     }
-
-                    activeTree = newTree; 
-                    await Task.Delay(15);
-                }
-            });
+                });
+            }
         }
 
         private void OnBallPositionNotification(object? sender, IVector newPos)

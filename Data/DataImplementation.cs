@@ -21,6 +21,16 @@ namespace Data
             if (upperLayerHandler == null)
                 throw new ArgumentNullException(nameof(upperLayerHandler));
             Random random = new Random();
+
+            if (!CancellationTokenSource.IsCancellationRequested)
+            {
+                CancellationTokenSource.Cancel();
+            }
+            CancellationTokenSource.Dispose();
+            CancellationTokenSource = new CancellationTokenSource();
+
+            BallsList.Clear();
+
             for (int i = 0; i < numberOfBalls; i++)
             {
                 Vector startingPosition = new(random.Next(100, 500), random.Next(100, 500));
@@ -39,10 +49,18 @@ namespace Data
         {
             Task.Run(async () =>
             {
-                while (!cancellationToken.IsCancellationRequested)
+                try
                 {
-                    ball.Move(new Vector(ball.Velocity.x, ball.Velocity.y), false);
-                    await Task.Delay(15, cancellationToken);
+                    while (!cancellationToken.IsCancellationRequested)
+                    {
+                        ball.Move(new Vector(ball.Velocity.x, ball.Velocity.y), false);
+
+                        await Task.Delay(15, cancellationToken);
+                    }
+                }
+                catch (TaskCanceledException)
+                {
+                    // Wyjątek jeśli zadanie zostało anulowane
                 }
             }, cancellationToken);
         }
@@ -54,6 +72,7 @@ namespace Data
                 if (disposing)
                 {
                     CancellationTokenSource.Cancel();
+                    CancellationTokenSource.Dispose();
                     BallsList.Clear();
                 }
                 Disposed = true;
