@@ -125,7 +125,7 @@ namespace BusinessLogic
                     List<Ball> colissionBalls = new();
 
 
-                    activeTree.Query(new Boundary(currX - radius, currY - radius, radius * 2, radius * 2), colissionBalls);
+                    activeTree.Query(new Boundary(currX - radius, currY - radius, radius * 4, radius * 4), colissionBalls);
 
                     lock (_lock) //sekcja krytyczna
                     {

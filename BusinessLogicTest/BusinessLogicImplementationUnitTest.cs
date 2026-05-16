@@ -41,8 +41,9 @@ namespace BusinessLogic.Test
                 for (int i = 0; i < numberOfBalls; i++)
                 {
                     FakeBall fakeBall = new();
+                    fakeBall.X = i * 100 + 50;
+                    fakeBall.Y = 100;
                     CreatedBalls.Add(fakeBall);
-
 
                     handler(new FakeVector(100, 100), fakeBall);
                 }
@@ -96,6 +97,39 @@ namespace BusinessLogic.Test
             Assert.AreEqual(-10, fakeData.CreatedBalls[0].Velocity.y);
             Assert.AreEqual(0 + radius, fakeData.CreatedBalls[0].X);
             Assert.AreEqual(height-radius, fakeData.CreatedBalls[0].Y);
+        }
+
+        [TestMethod]
+        public async Task BallCollisionTestMethod()
+        {
+            FakeDataAPI fakeData = new();
+            BusinessLogicImplementation logic = new(fakeData);
+
+            logic.Start(2, (pos, logicBall) => { });
+
+            await Task.Delay(50);
+
+            var ball1 = fakeData.CreatedBalls[0];
+            var ball2 = fakeData.CreatedBalls[1];
+
+            ball1.Velocity = new FakeVector(5.0, 0.0);
+            ball2.Velocity = new FakeVector(-5.0, 0.0);
+
+            ball1.SimulateMove(90.0, 100.0);
+            ball2.SimulateMove(110.0, 100.0);
+
+            await Task.Delay(50);
+
+            ball1.SimulateMove(95.0, 100.0);
+
+            Assert.AreEqual(-5.0, ball1.Velocity.x, 0.001);
+            Assert.AreEqual(0.0, ball1.Velocity.y, 0.001);
+
+            Assert.AreEqual(5.0, ball2.Velocity.x, 0.001);
+            Assert.AreEqual(0.0, ball2.Velocity.y, 0.001);
+
+            Assert.AreEqual(92.5, ball1.X, 0.001);
+            Assert.AreEqual(112.5, ball2.X, 0.001);
         }
 
         [TestMethod]

@@ -59,12 +59,18 @@
 
             foreach (Ball b in balls)
             {
-                found.Add(b);
+                if (range.Contains(b.position))
+                {
+                    found.Add(b);
+                }
             }
 
             if (isDivided)
             {
-                foreach (QuadTree child in children) child.Query(range, found);
+                foreach (QuadTree child in children)
+                {
+                    child.Query(range, found);
+                }
             }
         }
     }
