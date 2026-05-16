@@ -24,8 +24,8 @@ namespace Data
             for (int i = 0; i < numberOfBalls; i++)
             {
                 Vector startingPosition = new(random.Next(100, 500), random.Next(100, 500));
-                double initVx = (double)random.Next(-100, 100) / 10.0;
-                double initVy = (double)random.Next(-100, 100) / 10.0;
+                double initVx = (double)random.Next(-50, 50) / 10.0;
+                double initVy = (double)random.Next(-50, 50) / 10.0;
                 Vector initialVelocity = new(initVx, initVy);
                 Ball newBall = new(startingPosition, initialVelocity);
                 BallsList.Add(newBall);

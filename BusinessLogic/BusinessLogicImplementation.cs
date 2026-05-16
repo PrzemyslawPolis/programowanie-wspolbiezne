@@ -83,7 +83,7 @@ namespace BusinessLogic
                     double currY = newPos.y;
 
 
-                    if (currX <= radius || currX >= width - radius)
+                    if ((currX <= radius && ball.Velocity.x < 0) || (currX >= width - radius && ball.Velocity.x > 0))
                     {
                         if (currX < radius)
                         {
@@ -97,7 +97,7 @@ namespace BusinessLogic
                         logicBall.position = new Position(currX, currY);
                         ball.SetVelocity(-ball.Velocity.x, ball.Velocity.y);
                     }
-                    if (currY <= radius || currY >= height - radius)
+                    if ((currY <= radius && ball.Velocity.y < 0) || (currY >= height - radius && ball.Velocity.y > 0))
                     {
                         if (currY < radius)
                         {
@@ -132,16 +132,16 @@ namespace BusinessLogic
                                 double moveX = (distX / dist) * (overlap / 2.0);
                                 double moveY = (distY / dist) * (overlap / 2.0);
 
-                                currX += moveX;
-                                currY += moveY;
+                                currX -= moveX;
+                                currY -= moveY;
                                 ball.SetPosition(currX, currY);
                                 logicBall.position = new Position(currX, currY);
 
-                                col.position = new Position(col.position.x - moveX, col.position.y - moveY);
+                                col.position = new Position(col.position.x + moveX, col.position.y + moveY);
                                 col.underneathBall.SetPosition(col.position.x, col.position.y);
 
-                                distX = logicBall.position.x - col.position.x;
-                                distY = logicBall.position.y - col.position.y;
+                                distX = currX - col.position.x;
+                                distY = currY - col.position.y;
 
                                 double distSq = (distX * distX) + (distY * distY);
 

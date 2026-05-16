@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace BusinessLogic
+﻿namespace BusinessLogic
 {    internal record Boundary
     {
         public double x { get; }
@@ -25,7 +21,10 @@ namespace BusinessLogic
 
         public bool Intersects(Boundary bound)
         {
-            
+            return !(bound.x > x + width ||
+             bound.x + bound.width < x ||
+             bound.y > y + height ||
+             bound.y + bound.height < y);
         }
 
         public Boundary NewQuarter (int number)

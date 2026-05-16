@@ -16,6 +16,7 @@
 
         internal void UpdatePosition(double x, double y)
         {            
+            this.position = new Position(x, y);
             NewPositionNotification?.Invoke(this, new Position(x, y));
         }
 
