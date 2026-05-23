@@ -49,12 +49,39 @@ namespace Data
         {
             Task.Run(async () =>
             {
+                Stopwatch stopwatch = Stopwatch.StartNew();
+        
+                double accumulator = 0.0; 
+                // obliczenia co 15ms
+                double fixedTimeStep = 0.015;
+
                 try
                 {
                     while (!cancellationToken.IsCancellationRequested)
                     {
-                        ball.Move(new Vector(ball.Velocity.x, ball.Velocity.y), false);
+                        // ile minęło czasu od ostatniego ruchu
+                        double timeElapsed = stopwatch.Elapsed.TotalSeconds;
+                        stopwatch.Restart();
 
+                        // maksmylanie nadrabiane jest 100ms
+                        // ochrona przed bardzo dużym skokiem jeśli aplikacja była zawieszona
+                        if (timeElapsed > 0.1) timeElapsed = 0.1;
+
+                        // sumowanie upłyniętego czasu
+                        accumulator += timeElapsed;
+
+                        // wykonywanie kilku kroków naraz, aby nadrobić upłynięty czas powyżej 15ms
+                        while (accumulator >= fixedTimeStep)
+                        {
+                            double moveX = ball.Velocity.x * fixedTimeStep * 50.0;
+                            double moveY = ball.Velocity.y * fixedTimeStep * 50.0;
+
+                            ball.Move(new Vector(moveX, moveY), false);
+
+                            accumulator -= fixedTimeStep;
+                        }
+
+                        // odczekiwanie minimum 15ms
                         await Task.Delay(15, cancellationToken);
                     }
                 }

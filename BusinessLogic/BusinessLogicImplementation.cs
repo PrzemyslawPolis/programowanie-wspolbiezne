@@ -49,7 +49,10 @@ namespace BusinessLogic
 
                 Ball logicBall = new Ball(newPosition, dataBall);
 
-                BallDict.Add(dataBall, logicBall);
+                lock (_lock)
+                {
+                    BallDict.Add(dataBall, logicBall);
+                }
 
                 dataBall.NewPositionNotification += OnBallPositionNotification;
                 
