@@ -17,7 +17,7 @@ namespace Data
         public IVector Velocity { get; set; }
 
 
-        private Vector Position;
+        internal Vector Position { get; set; }
 
         public void SetPosition(double newX, double newY)
         {

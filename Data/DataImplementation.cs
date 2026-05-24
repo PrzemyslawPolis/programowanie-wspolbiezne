@@ -11,6 +11,8 @@ namespace Data
 
         private CancellationTokenSource CancellationTokenSource = new();
 
+        private Logger logger;
+
         public DataImplementation() {}
 
 
@@ -30,6 +32,8 @@ namespace Data
             CancellationTokenSource = new CancellationTokenSource();
 
             BallsList.Clear();
+            logger?.Dispose();
+            logger = new Logger();
 
             for (int i = 0; i < numberOfBalls; i++)
             {
@@ -78,6 +82,8 @@ namespace Data
 
                             ball.Move(new Vector(moveX, moveY), false);
 
+                            logger.LogBallState(ball);
+
                             accumulator -= fixedTimeStep;
                         }
 
@@ -101,6 +107,7 @@ namespace Data
                     CancellationTokenSource.Cancel();
                     CancellationTokenSource.Dispose();
                     BallsList.Clear();
+                    logger.Dispose();
                 }
                 Disposed = true;
             }
