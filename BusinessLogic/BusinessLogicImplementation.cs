@@ -130,33 +130,54 @@ namespace BusinessLogic
 
                     activeTree.Query(new Boundary(currX - radius, currY - radius, radius * 4, radius * 4), colissionBalls);
 
-                    lock (_lock) //sekcja krytyczna
+                    foreach (Ball col in colissionBalls)
                     {
-                        foreach (Ball col in colissionBalls)
+                        if (col == logicBall) continue;
+
+
+                        lock (_lock) //sekcja krytyczna
                         {
-                            if(col == logicBall) continue;
                             double distX = col.position.x - currX;
                             double distY = col.position.y - currY;
-                            double dist = Math.Sqrt((distX * distX) + (distY * distY));
-                            if (dist > 0 && dist < radius * 2)
-                            {
-                                double overlap = radius * 2 - dist;
+                            double distSq = (distX * distX) + (distY * distY);
 
+                            if (distSq == 0)
+                            {
+                                distX = 0.01;
+                                distY = 0.01;
+                                distSq = distX * distX + distY * distY;
+                            }
+
+                            double dist = Math.Sqrt(distSq);
+                            double overlap = radius * 2 - dist;
+
+                            if (overlap > 0)
+                            {
                                 double moveX = (distX / dist) * (overlap / 2.0);
                                 double moveY = (distY / dist) * (overlap / 2.0);
 
                                 currX -= moveX;
                                 currY -= moveY;
+
+                                double otherX = col.position.x + moveX;
+                                double otherY = col.position.y + moveY;
+
+                                currX = Math.Clamp(currX, radius, width - radius);
+                                currY = Math.Clamp(currY, radius, height - radius);
+
+                                otherX = Math.Clamp(otherX, radius, width - radius);
+                                otherY = Math.Clamp(otherY, radius, height - radius);
+
                                 ball.SetPosition(currX, currY);
-                                logicBall.position = new Position(currX, currY);
 
-                                col.position = new Position(col.position.x + moveX, col.position.y + moveY);
-                                col.underneathBall.SetPosition(col.position.x, col.position.y);
+                                col.position = new Position(otherX, otherY);
+                                col.underneathBall.SetPosition(otherX, otherY);
 
-                                distX = currX - col.position.x;
-                                distY = currY - col.position.y;
+                                distX = currX - otherX;
+                                distY = currY - otherY;
 
-                                double distSq = (distX * distX) + (distY * distY);
+                                distSq = (distX * distX) + (distY * distY);
+                                if (distSq == 0) continue;
 
                                 double dVx = ball.Velocity.x - col.underneathBall.Velocity.x;
                                 double dVy = ball.Velocity.y - col.underneathBall.Velocity.y;
@@ -172,7 +193,6 @@ namespace BusinessLogic
                                 col.underneathBall.SetVelocity(col.underneathBall.Velocity.x + changeX, col.underneathBall.Velocity.y + changeY);
                             }
                         }
-
                     }
 
                     logicBall.UpdatePosition(currX, currY);

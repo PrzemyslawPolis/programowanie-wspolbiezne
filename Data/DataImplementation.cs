@@ -107,7 +107,7 @@ namespace Data
                     CancellationTokenSource.Cancel();
                     CancellationTokenSource.Dispose();
                     BallsList.Clear();
-                    logger.Dispose();
+                    logger?.Dispose();
                 }
                 Disposed = true;
             }

@@ -53,5 +53,26 @@
         newInstance.CheckNumberOfBalls(x => Assert.AreEqual<int>(10, x));
       }
     }
-  }
+
+    [TestMethod]
+    public async Task StartsAsyncBallMovementTestMethod()
+    {
+        using (DataImplementation newInstance = new DataImplementation())
+        {
+            IVector? changedPosition = null;
+
+            newInstance.Start(1, (startingPos, ball) =>
+            {
+                ball.NewPositionNotification += (sender, newPos) =>
+                {
+                    changedPosition = newPos;
+                };
+            });
+
+            await Task.Delay(100);
+
+            Assert.IsNotNull(changedPosition);
+        }
+    }
+    }
 }
