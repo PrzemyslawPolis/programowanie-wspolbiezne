@@ -1,61 +1,49 @@
 ﻿using Data;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 
 namespace BusinessLogic
 {
     internal class BusinessLogicImplementation : BusinessLogicAbstractAPI
     {
-       
-        private readonly object _lock = new object();
-
-        private QuadTree activeTree = new QuadTree(new Boundary(0, 0, GetDimensions.TableWidth, GetDimensions.TableHeight)); //początkowe puste drzewo, żeby przeszło przez inicjalizację
+        private QuadTree activeTree = new QuadTree(new Boundary(0, 0, GetDimensions.TableWidth, GetDimensions.TableHeight));
         private bool isTaskRunning = false;
+        private ConcurrentDictionary<Data.IBall, Ball> BallDict = new();
+        private bool Disposed = false;
+        private readonly Data.DataAbstractAPI layerBelow;
 
-        public BusinessLogicImplementation() : this(null)
-        { }
+        private readonly object _treeLock = new object();
+
+        public BusinessLogicImplementation() : this(null) { }
 
         internal BusinessLogicImplementation(Data.DataAbstractAPI? underneathLayer)
         {
             layerBelow = underneathLayer == null ? Data.DataAbstractAPI.GetDataLayer() : underneathLayer;
         }
 
-
         public override void Dispose()
         {
-            if (Disposed)
-                throw new ObjectDisposedException(nameof(BusinessLogicImplementation));
+            if (Disposed) throw new ObjectDisposedException(nameof(BusinessLogicImplementation));
             layerBelow.Dispose();
             Disposed = true;
         }
 
-        private Dictionary<Data.IBall, Ball> BallDict = new();
-
         public override void Start(int numberOfBalls, Action<IPosition, IBall> upperLayerHandler)
         {
-            if (Disposed)
-                throw new ObjectDisposedException(nameof(BusinessLogicImplementation));
-            if (upperLayerHandler == null)
-                throw new ArgumentNullException(nameof(upperLayerHandler));
+            if (Disposed) throw new ObjectDisposedException(nameof(BusinessLogicImplementation));
+            if (upperLayerHandler == null) throw new ArgumentNullException(nameof(upperLayerHandler));
 
-            lock (_lock)
-            {
-                BallDict.Clear();
-                activeTree = new QuadTree(new Boundary(0, 0, GetDimensions.TableWidth, GetDimensions.TableHeight));
-            }
+            BallDict.Clear();
+            activeTree = new QuadTree(new Boundary(0, 0, GetDimensions.TableWidth, GetDimensions.TableHeight));
 
             layerBelow.Start(numberOfBalls, (startingPosition, dataBall) =>
             {
                 Position newPosition = new Position(startingPosition.x, startingPosition.y);
-
                 Ball logicBall = new Ball(newPosition, dataBall);
 
-                lock (_lock)
-                {
-                    BallDict.Add(dataBall, logicBall);
-                }
+                BallDict.TryAdd(dataBall, logicBall);
 
                 dataBall.NewPositionNotification += OnBallPositionNotification;
-                
                 upperLayerHandler(newPosition, logicBall);
             });
 
@@ -66,14 +54,16 @@ namespace BusinessLogic
                     while (!Disposed)
                     {
                         QuadTree newTree = new QuadTree(new Boundary(0, 0, GetDimensions.TableWidth, GetDimensions.TableHeight));
-                        lock (_lock)
+
+                        foreach (Ball logicBall in BallDict.Values)
                         {
-                            foreach (Ball logicBall in BallDict.Values)
-                            {
-                                newTree.Insert(logicBall);
-                            }
+                            newTree.Insert(logicBall);
                         }
-                        activeTree = newTree;
+
+                        lock (_treeLock)
+                        {
+                            activeTree = newTree;
+                        }
                         await Task.Delay(15);
                     }
                 });
@@ -82,71 +72,70 @@ namespace BusinessLogic
 
         private void OnBallPositionNotification(object? sender, IVector newPos)
         {
-            if (sender != null)
+            if (sender == null) return;
+            Data.IBall ball = (Data.IBall)sender;
+
+            if (BallDict.TryGetValue(ball, out var logicBall))
             {
-                Data.IBall ball = (Data.IBall)sender!;
+                double radius = BusinessLogicAbstractAPI.GetDimensions.BallDimension / 2;
+                double width = BusinessLogicAbstractAPI.GetDimensions.TableWidth;
+                double height = BusinessLogicAbstractAPI.GetDimensions.TableHeight;
 
-                if(BallDict.TryGetValue(ball, out var logicBall))
+                lock (logicBall.BallLock)
                 {
-                    double radius = BusinessLogicAbstractAPI.GetDimensions.BallDimension / 2;
-                    double width = BusinessLogicAbstractAPI.GetDimensions.TableWidth;
-                    double height = BusinessLogicAbstractAPI.GetDimensions.TableHeight;
-
                     double currX = newPos.x;
                     double currY = newPos.y;
-
+                    bool changedPos = false;
 
                     if ((currX <= radius && ball.Velocity.x < 0) || (currX >= width - radius && ball.Velocity.x > 0))
                     {
-                        if (currX < radius)
-                        {
-                            currX = radius;
-                        }
-                        else if (currX > width - radius)
-                        {
-                            currX = width - radius;
-                        }
-                        ball.SetPosition(currX, currY);
-                        logicBall.position = new Position(currX, currY);
+                        currX = Math.Clamp(currX, radius, width - radius);
                         ball.SetVelocity(-ball.Velocity.x, ball.Velocity.y);
+                        changedPos = true;
                     }
                     if ((currY <= radius && ball.Velocity.y < 0) || (currY >= height - radius && ball.Velocity.y > 0))
                     {
-                        if (currY < radius)
-                        {
-                            currY = radius;
-                        }
-                        else if (currY > height - radius)
-                        {
-                            currY = height - radius;
-                        }
-                        ball.SetPosition(currX, currY);
-                        logicBall.position = new Position(currX, currY);
+                        currY = Math.Clamp(currY, radius, height - radius);
                         ball.SetVelocity(ball.Velocity.x, -ball.Velocity.y);
+                        changedPos = true;
                     }
 
-                    List<Ball> colissionBalls = new();
-
-
-                    activeTree.Query(new Boundary(currX - radius, currY - radius, radius * 4, radius * 4), colissionBalls);
-
-                    foreach (Ball col in colissionBalls)
+                    if (changedPos)
                     {
-                        if (col == logicBall) continue;
+                        ball.SetPosition(currX, currY);
+                    }
 
+                    logicBall.position = new Position(currX, currY);
+                }
 
-                        lock (_lock) //sekcja krytyczna
+                List<Ball> collisionBalls = new();
+                QuadTree currentTreeSnapshot;
+
+                lock (_treeLock) { currentTreeSnapshot = activeTree; }
+
+                currentTreeSnapshot.Query(new Boundary(logicBall.position.x - radius, logicBall.position.y - radius, radius * 4, radius * 4), collisionBalls);
+
+                foreach (Ball col in collisionBalls)
+                {
+                    if (col.Id == logicBall.Id) continue;
+
+                    object lock1 = logicBall.Id < col.Id ? logicBall.BallLock : col.BallLock;
+                    object lock2 = logicBall.Id < col.Id ? col.BallLock : logicBall.BallLock;
+
+                    lock (lock1)
+                    {
+                        lock (lock2)
                         {
-                            double distX = col.position.x - currX;
-                            double distY = col.position.y - currY;
+                            double currX = logicBall.position.x;
+                            double currY = logicBall.position.y;
+                            double otherX = col.position.x;
+                            double otherY = col.position.y;
+
+                            double distX = otherX - currX;
+                            double distY = otherY - currY;
                             double distSq = (distX * distX) + (distY * distY);
 
-                            if (distSq == 0)
-                            {
-                                distX = 0.01;
-                                distY = 0.01;
-                                distSq = distX * distX + distY * distY;
-                            }
+                            if (distSq == 0) continue; 
 
                             double dist = Math.Sqrt(distSq);
                             double overlap = radius * 2 - dist;
@@ -159,8 +148,8 @@ namespace BusinessLogic
                                 currX -= moveX;
                                 currY -= moveY;
 
-                                double otherX = col.position.x + moveX;
-                                double otherY = col.position.y + moveY;
+                                otherX += moveX;
+                                otherY += moveY;
 
                                 currX = Math.Clamp(currX, radius, width - radius);
                                 currY = Math.Clamp(currY, radius, height - radius);
@@ -169,40 +158,32 @@ namespace BusinessLogic
                                 otherY = Math.Clamp(otherY, radius, height - radius);
 
                                 ball.SetPosition(currX, currY);
+                                logicBall.position = new Position(currX, currY);
 
-                                col.position = new Position(otherX, otherY);
                                 col.underneathBall.SetPosition(otherX, otherY);
-
-                                distX = currX - otherX;
-                                distY = currY - otherY;
-
-                                distSq = (distX * distX) + (distY * distY);
-                                if (distSq == 0) continue;
+                                col.position = new Position(otherX, otherY);
 
                                 double dVx = ball.Velocity.x - col.underneathBall.Velocity.x;
                                 double dVy = ball.Velocity.y - col.underneathBall.Velocity.y;
 
                                 double dotProduct = (dVx * distX) + (dVy * distY);
 
-                                if (dotProduct > 0) continue;
+                                if (dotProduct > 0)
+                                {
+                                    double changeX = distX * (dotProduct / distSq);
+                                    double changeY = distY * (dotProduct / distSq);
 
-                                double changeX = distX * (dotProduct / distSq);
-                                double changeY = distY * (dotProduct / distSq);
-
-                                ball.SetVelocity(ball.Velocity.x - changeX, ball.Velocity.y - changeY);
-                                col.underneathBall.SetVelocity(col.underneathBall.Velocity.x + changeX, col.underneathBall.Velocity.y + changeY);
+                                    ball.SetVelocity(ball.Velocity.x - changeX, ball.Velocity.y - changeY);
+                                    col.underneathBall.SetVelocity(col.underneathBall.Velocity.x + changeX, col.underneathBall.Velocity.y + changeY);
+                                }
                             }
                         }
                     }
-
-                    logicBall.UpdatePosition(currX, currY);
                 }
+
+                logicBall.UpdatePosition(logicBall.position.x, logicBall.position.y);
             }
         }
-
-        private bool Disposed = false;
-
-        private readonly Data.DataAbstractAPI layerBelow;
 
         [Conditional("DEBUG")]
         internal void CheckObjectDisposed(Action<bool> returnInstanceDisposed)
