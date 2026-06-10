@@ -1,20 +1,19 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading;
 
 namespace Data
 {
     internal class DataImplementation : DataAbstractAPI
     {
         private bool Disposed = false;
-
-        private List<Ball> BallsList = [];
-
-        private CancellationTokenSource CancellationTokenSource = new();
-
+        private List<Ball> BallsList = new();
         private Logger logger;
 
-        public DataImplementation() {}
+        private List<Timer> TimersList = new();
 
+        public DataImplementation() { }
 
         public override void Start(int numberOfBalls, Action<IVector, IBall> upperLayerHandler)
         {
@@ -22,16 +21,18 @@ namespace Data
                 throw new ObjectDisposedException(nameof(DataImplementation));
             if (upperLayerHandler == null)
                 throw new ArgumentNullException(nameof(upperLayerHandler));
+
             Random random = new Random();
 
-            if (!CancellationTokenSource.IsCancellationRequested)
+            // czyszczenie starych timerów przy ponownym starcie
+            foreach (var timer in TimersList)
             {
-                CancellationTokenSource.Cancel();
+                timer.Change(Timeout.Infinite, Timeout.Infinite);
+                timer.Dispose();
             }
-            CancellationTokenSource.Dispose();
-            CancellationTokenSource = new CancellationTokenSource();
-
+            TimersList.Clear();
             BallsList.Clear();
+
             logger?.Dispose();
             logger = new Logger();
 
@@ -41,61 +42,60 @@ namespace Data
                 double initVx = (double)random.Next(-50, 50) / 10.0;
                 double initVy = (double)random.Next(-50, 50) / 10.0;
                 Vector initialVelocity = new(initVx, initVy);
+
                 Ball newBall = new(startingPosition, initialVelocity);
                 BallsList.Add(newBall);
+
                 upperLayerHandler(startingPosition, newBall);
 
-                StartBallMovement(newBall, CancellationTokenSource.Token);
+                // startowy czas dla kuli
+                newBall.LastUpdateTime = DateTime.UtcNow;
+
+                Timer ballTimer = new Timer(BallTimerCallback, newBall, 0, 15);
+                TimersList.Add(ballTimer);
             }
         }
 
-        private void StartBallMovement(Ball ball, CancellationToken cancellationToken)
+        private void BallTimerCallback(object state)
         {
-            Task.Run(async () =>
+            if (state is Ball ball)
             {
-                Stopwatch stopwatch = Stopwatch.StartNew();
-        
-                double accumulator = 0.0; 
-                // obliczenia co 15ms
-                double fixedTimeStep = 0.015;
+                // jeśli obliczenia trwają dłużej niż 15ms (zostanie wywołany kolejny callback, gdy poprzedni ciągle trwa)
+                // ignorujemy nowy callback
+                if (Interlocked.Exchange(ref ball.IsUpdating, 1) == 1) return;
 
                 try
                 {
-                    while (!cancellationToken.IsCancellationRequested)
-                    {
-                        // ile minęło czasu od ostatniego ruchu
-                        double timeElapsed = stopwatch.Elapsed.TotalSeconds;
-                        stopwatch.Restart();
+                    if (Disposed) return;
 
-                        // maksmylanie nadrabiane jest 100ms
-                        // ochrona przed bardzo dużym skokiem jeśli aplikacja była zawieszona
-                        if (timeElapsed > 0.1) timeElapsed = 0.1;
+                    // obliczenie upłyniętego czasu systemowego
+                    DateTime now = DateTime.UtcNow;
+                    double dt = (now - ball.LastUpdateTime).TotalSeconds;
+                    ball.LastUpdateTime = now;
 
-                        // sumowanie upłyniętego czasu
-                        accumulator += timeElapsed;
+                    // ochrona przed dużymi skokami (> 100ms)
+                    if (dt > 0.1) dt = 0.1;
 
-                        // wykonywanie kilku kroków naraz, aby nadrobić upłynięty czas powyżej 15ms
-                        while (accumulator >= fixedTimeStep)
-                        {
-                            double moveX = ball.Velocity.x * fixedTimeStep * 50.0;
-                            double moveY = ball.Velocity.y * fixedTimeStep * 50.0;
+                    ball.Accumulator += dt;
 
-                            ball.Move(new Vector(moveX, moveY), false);
+                    double fixedTimeStep = 0.015;
 
-                            logger.LogBallState(ball);
+                    while (ball.Accumulator >= fixedTimeStep)
+                    {                        
+                        double moveX = ball.Velocity.x * fixedTimeStep * 50.0;
+                        double moveY = ball.Velocity.y * fixedTimeStep * 50.0;
 
-                            accumulator -= fixedTimeStep;
-                        }
+                        ball.Move(new Vector(moveX, moveY), false);
+                        logger.LogBallState(ball);
 
-                        // odczekiwanie minimum 15ms
-                        await Task.Delay(15, cancellationToken);
+                        ball.Accumulator -= fixedTimeStep;
                     }
                 }
-                catch (TaskCanceledException)
+                finally
                 {
-                    // Wyjątek jeśli zadanie zostało anulowane
+                    Interlocked.Exchange(ref ball.IsUpdating, 0);
                 }
-            }, cancellationToken);
+            }
         }
 
         protected virtual void Dispose(bool disposing)
@@ -104,8 +104,13 @@ namespace Data
             {
                 if (disposing)
                 {
-                    CancellationTokenSource.Cancel();
-                    CancellationTokenSource.Dispose();
+                    // zatrzymywanie timerów
+                    foreach (var timer in TimersList)
+                    {
+                        timer.Change(Timeout.Infinite, Timeout.Infinite);
+                        timer.Dispose();
+                    }
+                    TimersList.Clear();
                     BallsList.Clear();
                     logger?.Dispose();
                 }
@@ -117,13 +122,10 @@ namespace Data
 
         public override void Dispose()
         {
-            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
         }
 
-        
-        //metody do testów
         [Conditional("DEBUG")]
         internal void CheckBallsList(Action<IEnumerable<IBall>> returnBallsList)
         {
@@ -141,6 +143,5 @@ namespace Data
         {
             returnInstanceDisposed(Disposed);
         }
-
     }
 }

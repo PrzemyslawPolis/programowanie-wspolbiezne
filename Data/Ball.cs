@@ -10,7 +10,10 @@ namespace Data
             Velocity = initialVelocity;
         }
 
-
+        
+        internal int IsUpdating = 0;
+        internal DateTime LastUpdateTime { get; set; }
+        internal double Accumulator { get; set; } = 0.0;
 
         public event EventHandler<IVector>? NewPositionNotification;
 
