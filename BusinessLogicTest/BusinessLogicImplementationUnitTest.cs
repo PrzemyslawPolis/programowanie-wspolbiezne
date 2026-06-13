@@ -133,6 +133,41 @@ namespace BusinessLogic.Test
         }
 
         [TestMethod]
+        public async Task ConcurrentCollisionNoDeadlockTestMethod()
+        {
+            FakeDataAPI fakeData = new();
+            using (BusinessLogicImplementation logic = new(fakeData))
+            {
+                logic.Start(2, (pos, logicBall) => { });
+
+                await Task.Delay(50);
+
+                var ball1 = fakeData.CreatedBalls[0];
+                var ball2 = fakeData.CreatedBalls[1];
+
+
+                ball1.Velocity = new FakeVector(5.0, 0.0);
+                ball2.Velocity = new FakeVector(-5.0, 0.0);
+                ball1.SetPosition(90.0, 100.0);
+                ball2.SetPosition(110.0, 100.0);
+
+                // Ruch kulek na osobnych wątkach
+                var task1 = Task.Run(() => ball1.SimulateMove(95.0, 100.0));
+                var task2 = Task.Run(() => ball2.SimulateMove(105.0, 100.0));
+
+                // Sprawdzenie czy kulki odbiły się w trakcie 1 sekundy
+                // jeśli nie, to wystąpiło zakleszczenie
+                Task resultTask = Task.WhenAll(task1, task2);
+                var completedTask = await Task.WhenAny(resultTask, Task.Delay(1000));
+                Assert.AreEqual(resultTask, completedTask);
+
+                // Wektory powinny być odwrócone po odbiciu
+                Assert.IsTrue(ball1.Velocity.x < 0);
+                Assert.IsTrue(ball2.Velocity.x > 0);
+            }
+        }
+
+        [TestMethod]
         public void DisposeTestMethod()
         {
             FakeDataAPI fakeDataLayer = new();

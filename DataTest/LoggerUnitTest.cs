@@ -28,5 +28,38 @@
             Assert.IsTrue(lastLog.Contains("\"X\": 10.00") || lastLog.Contains("\"X\": 10,00"));
             Assert.IsTrue(lastLog.Contains("\"Y\": 20.00") || lastLog.Contains("\"Y\": 20,00"));
         }
+
+        [TestMethod]
+        public async Task LoggerConcurrentWritesStressTestMethod()
+        {
+            string expectedFilePath;
+            int numberOfTasks = 100;
+
+            using (Logger logger = new Logger())
+            {
+                string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
+                expectedFilePath = Path.GetFullPath(Path.Combine(baseDirectory, @"..\..\..\..\Data", "logs.json"));
+
+                Ball testBall = new Ball(new Vector(0, 0), new Vector(0, 0));
+
+                List<Task> tasks = new List<Task>();
+                for (int i = 0; i < numberOfTasks; i++)
+                {
+                    tasks.Add(Task.Run(() =>
+                    {
+                        logger.LogBallState(testBall);
+                    }));
+                }
+
+
+                await Task.WhenAll(tasks);
+
+            }
+
+            Assert.IsTrue(File.Exists(expectedFilePath));
+            string[] savedLines = File.ReadAllLines(expectedFilePath);
+
+            Assert.AreEqual<int>(numberOfTasks, savedLines.Length);
+        }
     }
 }

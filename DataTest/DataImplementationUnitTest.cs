@@ -73,6 +73,6 @@
 
             Assert.IsNotNull(changedPosition);
         }
-    }
-    }
+       }
+   }
 }

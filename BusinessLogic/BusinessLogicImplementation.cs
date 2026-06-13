@@ -12,7 +12,7 @@ namespace BusinessLogic
         private bool Disposed = false;
         private readonly Data.DataAbstractAPI layerBelow;
 
-        private readonly object _treeLock = new object();
+        private readonly object treeLock = new object();
 
         public BusinessLogicImplementation() : this(null) { }
 
@@ -60,7 +60,7 @@ namespace BusinessLogic
                             newTree.Insert(logicBall);
                         }
 
-                        lock (_treeLock)
+                        lock (treeLock)
                         {
                             activeTree = newTree;
                         }
@@ -111,7 +111,7 @@ namespace BusinessLogic
                 List<Ball> collisionBalls = new();
                 QuadTree currentTreeSnapshot;
 
-                lock (_treeLock) { currentTreeSnapshot = activeTree; }
+                lock (treeLock) { currentTreeSnapshot = activeTree; }
 
                 currentTreeSnapshot.Query(new Boundary(logicBall.position.x - radius, logicBall.position.y - radius, radius * 4, radius * 4), collisionBalls);
 
